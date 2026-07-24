@@ -16,10 +16,7 @@ def risk_tool(user_data: dict) -> dict:
     expense = user_data["monthly_expense"]
     category = user_data["investment_category"]
 
-    # -------------------------------------------------
-    # Age Score
-    # -------------------------------------------------
-
+    
     if age <= 30:
         factors["Age"] = 15
 
@@ -31,9 +28,7 @@ def risk_tool(user_data: dict) -> dict:
 
     score += factors["Age"]
 
-    # -------------------------------------------------
-    # Savings Score
-    # -------------------------------------------------
+   
 
     savings = income - expense
 
@@ -51,9 +46,7 @@ def risk_tool(user_data: dict) -> dict:
 
     score += factors["Savings"]
 
-    # ============================================================
-    # BEGINNER
-    # ============================================================
+   
 
     if category == "Beginner":
 
@@ -85,10 +78,7 @@ def risk_tool(user_data: dict) -> dict:
             "Very stable": 20
         }[user_data["income_stability"]]
 
-    # ============================================================
-    # INTERMEDIATE
-    # ============================================================
-
+    
     else:
 
         score += min(len(user_data["products_used"]) * 4, 20)

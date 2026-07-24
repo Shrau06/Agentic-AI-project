@@ -12,9 +12,7 @@ def portfolio_tool(user_data: dict, risk_result: dict) -> dict:
     goal = user_data["goal"]
     horizon = user_data["investment_period"]
 
-    # --------------------------------------------
-    # Default Allocation
-    # --------------------------------------------
+  
 
     if profile == "Conservative":
 
@@ -51,9 +49,7 @@ def portfolio_tool(user_data: dict, risk_result: dict) -> dict:
 
         expected_return = "12% - 15% annually"
 
-    # --------------------------------------------
-    # Goal Adjustments
-    # --------------------------------------------
+   
 
     if goal == "Saving money safely":
 
@@ -70,9 +66,7 @@ def portfolio_tool(user_data: dict, risk_result: dict) -> dict:
 
         allocation["Gold"] = max(allocation.get("Gold", 0), 20)
 
-    # --------------------------------------------
-    # Horizon Adjustments
-    # --------------------------------------------
+  
 
     if horizon == "Less than 1 year":
 

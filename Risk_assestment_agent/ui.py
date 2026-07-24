@@ -21,9 +21,8 @@ def risk_assessment_ui():
         "and suggest a suitable investment approach."
     )
 
-    # -------------------------------------------------
-    # Basic Information
-    # -------------------------------------------------
+    
+   
 
     st.header("👤 Basic Information")
 
@@ -46,10 +45,7 @@ def risk_assessment_ui():
         value=15000
     )
 
-    # -------------------------------------------------
-    # Investment Experience
-    # -------------------------------------------------
-
+    
     st.header("💰 Investment Experience")
 
     investment_category = st.radio(
@@ -59,10 +55,6 @@ def risk_assessment_ui():
             "Intermediate"
         ]
     )
-
-    # ============================================================
-    # BEGINNER
-    # ============================================================
 
     if investment_category == "Beginner":
 
@@ -116,9 +108,7 @@ def risk_assessment_ui():
             ]
         )
 
-    # ============================================================
-    # INTERMEDIATE
-    # ============================================================
+   
 
     else:
 

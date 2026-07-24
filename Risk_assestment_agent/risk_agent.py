@@ -6,32 +6,23 @@ from prompts import RISK_ASSESSMENT_PROMPT
 
 def run_risk_assessment(llm):
 
-    # -----------------------------
-    # Get User Input
-    # -----------------------------
+    
     user_data = risk_assessment_ui()
 
     if user_data is None:
         return None
 
-    # -----------------------------
-    # Risk Assessment
-    # -----------------------------
+    
     risk_result = risk_tool.invoke({
         "user_data": user_data
     })
 
-    # -----------------------------
-    # Portfolio Recommendation
-    # -----------------------------
+ 
     portfolio_result = portfolio_tool.invoke({
         "user_data": user_data,
         "risk_result": risk_result
     })
 
-    # -----------------------------
-    # Build Prompt
-    # -----------------------------
     prompt = RISK_ASSESSMENT_PROMPT.format(
 
         age=user_data["age"],
@@ -49,9 +40,7 @@ def run_risk_assessment(llm):
         expected_return=portfolio_result["expected_return"]
     )
 
-    # -----------------------------
-    # LLM Response
-    # -----------------------------
+    
     response = llm.invoke(prompt)
 
     return {
