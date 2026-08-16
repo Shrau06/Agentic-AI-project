@@ -6,13 +6,6 @@ def risk_assessment_ui():
     Displays the Risk Assessment UI and returns the user data
     when the user clicks the Analyze button.
     """
-
-    st.set_page_config(
-        page_title="WealthLensAI - Risk Assessment",
-        page_icon="💼",
-        layout="centered"
-    )
-
     st.title("💼 WealthLensAI")
     st.subheader("📈 Risk & Investment Assessment")
 
@@ -21,51 +14,43 @@ def risk_assessment_ui():
         "and suggest a suitable investment approach."
     )
 
-    
-   
-
     st.header("👤 Basic Information")
 
     age = st.number_input(
         "Your Age",
         min_value=18,
         max_value=100,
-        value=25
+        value=25,
     )
 
     income = st.number_input(
         "Monthly Income (₹)",
         min_value=0,
-        value=30000
+        value=30000,
     )
 
     monthly_expense = st.number_input(
         "Monthly Expenses (₹)",
         min_value=0,
-        value=15000
+        value=15000,
     )
 
-    
     st.header("💰 Investment Experience")
 
     investment_category = st.radio(
         "Investment Experience",
-        [
-            "Beginner",
-            "Intermediate"
-        ]
+        ["Beginner", "Intermediate"],
     )
 
     if investment_category == "Beginner":
-
         market_reaction = st.radio(
             "If ₹10,000 becomes ₹8,000 after one month, what will you do?",
             [
                 "Withdraw all my money",
                 "Withdraw some money",
                 "Wait for it to recover",
-                "Invest more because prices are lower"
-            ]
+                "Invest more because prices are lower",
+            ],
         )
 
         goal = st.radio(
@@ -74,8 +59,8 @@ def risk_assessment_ui():
                 "Saving money safely",
                 "Building long-term wealth",
                 "Generating higher returns",
-                "Protecting money from inflation"
-            ]
+                "Protecting money from inflation",
+            ],
         )
 
         investment_period = st.radio(
@@ -84,8 +69,8 @@ def risk_assessment_ui():
                 "Less than 1 year",
                 "1-3 years",
                 "3-5 years",
-                "More than 5 years"
-            ]
+                "More than 5 years",
+            ],
         )
 
         risk_capacity = st.radio(
@@ -94,8 +79,8 @@ def risk_assessment_ui():
                 "Up to 5%",
                 "Around 10%",
                 "Around 20%",
-                "More than 30%"
-            ]
+                "More than 30%",
+            ],
         )
 
         income_stability = st.radio(
@@ -104,14 +89,10 @@ def risk_assessment_ui():
                 "Unstable",
                 "Somewhat stable",
                 "Stable",
-                "Very stable"
-            ]
+                "Very stable",
+            ],
         )
-
-   
-
     else:
-
         products_used = st.multiselect(
             "Products you've invested in",
             [
@@ -120,8 +101,8 @@ def risk_assessment_ui():
                 "Mutual Funds",
                 "Stocks",
                 "ETFs",
-                "Government Bonds"
-            ]
+                "Government Bonds",
+            ],
         )
 
         market_reaction = st.radio(
@@ -130,8 +111,8 @@ def risk_assessment_ui():
                 "Sell everything",
                 "Sell some investments",
                 "Hold my investments",
-                "Invest more"
-            ]
+                "Invest more",
+            ],
         )
 
         return_preference = st.radio(
@@ -139,8 +120,8 @@ def risk_assessment_ui():
             [
                 "Stable but lower returns",
                 "Balanced growth",
-                "Higher returns with higher risk"
-            ]
+                "Higher returns with higher risk",
+            ],
         )
 
         review_frequency = st.radio(
@@ -149,8 +130,8 @@ def risk_assessment_ui():
                 "Rarely",
                 "Every few months",
                 "Monthly",
-                "Weekly"
-            ]
+                "Weekly",
+            ],
         )
 
         investment_period = st.radio(
@@ -159,8 +140,8 @@ def risk_assessment_ui():
                 "1-3 years",
                 "3-5 years",
                 "5-10 years",
-                "More than 10 years"
-            ]
+                "More than 10 years",
+            ],
         )
 
         goal = "Building long-term wealth"
@@ -168,7 +149,6 @@ def risk_assessment_ui():
     st.divider()
 
     if st.button("🔍 Analyze My Risk Profile"):
-
         user_data = {
             "age": age,
             "income": income,
@@ -176,33 +156,25 @@ def risk_assessment_ui():
             "investment_category": investment_category,
             "goal": goal,
             "investment_period": investment_period,
-            "market_reaction": market_reaction
+            "market_reaction": market_reaction,
         }
 
         if investment_category == "Beginner":
-
-            user_data.update({
-                "risk_capacity": risk_capacity,
-                "income_stability": income_stability
-            })
-
+            user_data.update(
+                {
+                    "risk_capacity": risk_capacity,
+                    "income_stability": income_stability,
+                }
+            )
         else:
-
-            user_data.update({
-                "products_used": products_used,
-                "return_preference": return_preference,
-                "review_frequency": review_frequency
-            })
+            user_data.update(
+                {
+                    "products_used": products_used,
+                    "return_preference": return_preference,
+                    "review_frequency": review_frequency,
+                }
+            )
 
         return user_data
 
     return None
-
-
-if __name__ == "__main__":
-
-    data = risk_assessment_ui()
-
-    if data:
-        st.success("Assessment Completed Successfully!")
-        st.json(data)

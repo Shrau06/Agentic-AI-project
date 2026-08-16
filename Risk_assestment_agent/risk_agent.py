@@ -1,51 +1,61 @@
-from ui import risk_assessment_ui
+from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage
 from risk_tool import risk_tool
 from portfolio_tool import portfolio_tool
-from prompts import RISK_ASSESSMENT_PROMPT
+from prompts import AGENT_SYSTEM_PROMPT
 
 
-def run_risk_assessment(llm):
-
+def run_risk_assessment(llm, user_data):
+    """Run the autonomous tool-calling WealthLens agent using native tool binding."""
+    tools = [risk_tool, portfolio_tool]
+    tools_by_name = {t.name: t for t in tools}
     
-    user_data = risk_assessment_ui()
+    # Bind tools directly to the LLM model
+    llm_with_tools = llm.bind_tools(tools)
 
-    if user_data is None:
-        return None
+    user_message = f"""
+Analyze this user's financial profile:
 
-    
-    risk_result = risk_tool.invoke({
-        "user_data": user_data
-    })
+{user_data}
 
- 
-    portfolio_result = portfolio_tool.invoke({
-        "user_data": user_data,
-        "risk_result": risk_result
-    })
+Perform a complete risk assessment.
+Use risk_tool first.
+Then use portfolio_tool if portfolio allocation is needed.
+Finally generate the complete WealthLens AI report.
+"""
 
-    prompt = RISK_ASSESSMENT_PROMPT.format(
+    messages = [
+        SystemMessage(content=AGENT_SYSTEM_PROMPT),
+        HumanMessage(content=user_message),
+    ]
 
-        age=user_data["age"],
-        income=user_data["income"],
-        monthly_expense=user_data["monthly_expense"],
-        investment_category=user_data["investment_category"],
-        goal=user_data["goal"],
-        investment_period=user_data["investment_period"],
-        market_reaction=user_data["market_reaction"],
+    # Initial LLM call
+    response = llm_with_tools.invoke(messages)
+    messages.append(response)
 
-        risk_score=risk_result["risk_score"],
-        risk_level=risk_result["risk_profile"],
+    # Process tool calls in a loop until completion
+    while hasattr(response, "tool_calls") and response.tool_calls:
+        for tool_call in response.tool_calls:
+            tool_name = tool_call["name"]
+            selected_tool = tools_by_name[tool_name]
+            
+            # Execute tool call
+            tool_output = selected_tool.invoke(tool_call["args"])
+            
+            # Append execution result back to messages
+            messages.append(
+                ToolMessage(
+                    content=str(tool_output),
+                    tool_call_id=tool_call["id"],
+                    name=tool_name,
+                )
+            )
 
-        allocation=portfolio_result["allocation"],
-        expected_return=portfolio_result["expected_return"]
-    )
-
-    
-    response = llm.invoke(prompt)
+        # Get next model response after tools executed
+        response = llm_with_tools.invoke(messages)
+        messages.append(response)
 
     return {
         "user_profile": user_data,
-        "risk_assessment": risk_result,
-        "portfolio": portfolio_result,
-        "ai_recommendation": response.content
+        "agent_response": messages[-1].content,
+        "messages": messages,
     }
