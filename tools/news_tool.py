@@ -1,46 +1,47 @@
-from newsapi import NewsApiClient
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-API_KEY = os.getenv("NEWS_API_KEY")
-
-newsapi = NewsApiClient(api_key=API_KEY)
+import feedparser
+from bs4 import BeautifulSoup
+from urllib.parse import quote
 
 
 def get_news(query, page_size=5):
     """
-    Fetch relevant news related to a company.
+    Fetch relevant company news from Google News RSS.
     """
 
     try:
 
-        response = newsapi.get_everything(
-            q=f'"{query}"',
-            language="en",
-            sort_by="publishedAt",
-            page_size=20
+        search_query = quote(f'"{query}" stock')
+
+        url = (
+            "https://news.google.com/rss/search?"
+            f"q={search_query}"
+            "&hl=en-IN"
+            "&gl=IN"
+            "&ceid=IN:en"
         )
 
-        articles = response.get("articles", [])
+        feed = feedparser.parse(url)
 
-        filtered_articles = []
+        articles = []
 
-        for article in articles:
+        for entry in feed.entries[:page_size]:
 
-            title = article.get("title", "")
-            description = article.get("description", "")
+            title = entry.get("title", "")
+            summary_html = entry.get("description", "")
+            summary = BeautifulSoup(summary_html, "html.parser").get_text(" ", strip=True)
+            link = entry.get("link", "")
+            published = entry.get("published", "")
 
-            text = f"{title} {description}".lower()
+            articles.append(
+                {
+                    "title": title,
+                    "description": summary,
+                    "url": link,
+                    "published": published
+                }
+            )
 
-            if query.lower() in text:
-                filtered_articles.append(article)
-
-        if filtered_articles:
-            return filtered_articles[:page_size]
-
-        return articles[:page_size]
+        return articles
 
     except Exception as e:
         print("Error:", e)

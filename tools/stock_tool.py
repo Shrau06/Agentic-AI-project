@@ -89,10 +89,8 @@ def get_company_summary(symbol):
 
         info = ticker.info
 
-        return info.get(
-            "longBusinessSummary",
-            "Summary not available."
-        )
+        if not info:
+           return {"error": "Unable to fetch stock information."}
 
     except Exception as e:
         return str(e)
