@@ -103,3 +103,34 @@ def delete_data():
 # Create Database Automatically
 # -----------------------------
 create_database()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

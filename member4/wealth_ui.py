@@ -66,10 +66,18 @@ def wealth_dashboard():
         step=10000,
     )
 
-    risk = st.sidebar.selectbox(
-        "Risk Tolerance",
-        ["Low", "Moderate", "High"]
-    )
+    risk_profile = st.sidebar.selectbox(
+    "Risk Profile",
+    ["Conservative", "Moderate", "Aggressive"]
+)
+
+    risk_mapping = {
+    "Conservative": "Low",
+    "Moderate": "Moderate",
+    "Aggressive": "High"
+}
+
+    risk = risk_mapping[risk_profile]
 
     if "dashboard" not in st.session_state:
         st.session_state.dashboard = False
