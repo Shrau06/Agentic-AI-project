@@ -1,3 +1,4 @@
+
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage
 from risk_tool import risk_tool
 from portfolio_tool import portfolio_tool
@@ -6,9 +7,11 @@ from prompts import AGENT_SYSTEM_PROMPT
 
 def run_risk_assessment(llm, user_data):
     """Run the autonomous tool-calling WealthLens agent using native tool binding."""
+
     tools = [risk_tool, portfolio_tool]
+    risk_result = None
     tools_by_name = {t.name: t for t in tools}
-    
+
     # Bind tools directly to the LLM model
     llm_with_tools = llm.bind_tools(tools)
 
@@ -37,10 +40,14 @@ Finally generate the complete WealthLens AI report.
         for tool_call in response.tool_calls:
             tool_name = tool_call["name"]
             selected_tool = tools_by_name[tool_name]
-            
+
             # Execute tool call
             tool_output = selected_tool.invoke(tool_call["args"])
-            
+
+            # Capture risk assessment result
+            if tool_name == "risk_tool":
+                risk_result = tool_output
+
             # Append execution result back to messages
             messages.append(
                 ToolMessage(
@@ -58,4 +65,5 @@ Finally generate the complete WealthLens AI report.
         "user_profile": user_data,
         "agent_response": messages[-1].content,
         "messages": messages,
+        "risk_result": risk_result,
     }

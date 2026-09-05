@@ -1,10 +1,13 @@
+
+
 from langchain_core.tools import tool
 
 
 @tool
 def portfolio_tool(user_data: dict, risk_result: dict) -> dict:
     """Create portfolio allocation from risk profile, goal and horizon."""
-    profile = risk_result.get("risk_profile", "Moderate")
+
+    profile = risk_result.get("risk_level", "Moderate")
     goal = user_data.get("goal", "Building long-term wealth")
     horizon = user_data.get("investment_period", "3-5 years")
 
@@ -17,6 +20,7 @@ def portfolio_tool(user_data: dict, risk_result: dict) -> dict:
             "Cash": 5,
         }
         expected_return = "6% - 8% annually"
+
     elif profile == "Moderate":
         allocation = {
             "Equity": 50,
@@ -26,6 +30,7 @@ def portfolio_tool(user_data: dict, risk_result: dict) -> dict:
             "Cash": 5,
         }
         expected_return = "8% - 12% annually"
+
     else:
         allocation = {
             "Equity": 70,
@@ -43,6 +48,7 @@ def portfolio_tool(user_data: dict, risk_result: dict) -> dict:
             "Cash": 10,
         }
         expected_return = "5% - 7% annually"
+
     elif goal == "Protecting money from inflation":
         allocation["Gold"] = max(allocation.get("Gold", 0), 20)
 

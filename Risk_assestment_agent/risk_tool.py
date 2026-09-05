@@ -125,3 +125,4 @@ def risk_tool(user_data: dict) -> dict:
         "monthly_savings": savings,
         "risk_level": profile,
     }
+
