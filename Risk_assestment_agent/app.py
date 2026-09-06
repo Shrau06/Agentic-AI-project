@@ -64,21 +64,48 @@ def show_risk_assessment():
         clean_report = extract_clean_text(result.get("agent_response", ""))
         st.markdown(clean_report)
 
-        with st.expander("🔍 View Agent Tool Execution"):
-            for message in result.get("messages", []):
-                msg_type = getattr(message, "type", "unknown")
-                st.write(f"**Message Type:** {msg_type}")
-
-                msg_content = getattr(message, "content", "")
-                if msg_content:
-                    cleaned_msg = extract_clean_text(msg_content)
-
-                    if cleaned_msg.strip():
-                        st.text(cleaned_msg)
-                    else:
-                        st.caption("(Tool call execution message)")
-
+        with st.expander("🔍 View Agent Tool Execution", expanded=False):
+            st.markdown("### 🛠️ Agent Autonomous Tool Execution Trace")
+            
+            # 1. Risk Tool Execution
+            risk_res = result.get("risk_result")
+            if risk_res:
+                st.markdown("#### 1️⃣ `risk_tool` Execution Output")
+                st.write(f"**Calculated Risk Level:** `{risk_res.get('risk_level', 'Moderate')}` | **Risk Score:** `{risk_res.get('risk_score', 'N/A')}/{risk_res.get('maximum_score', 115)}` ({risk_res.get('risk_percentage', 0)}%)")
+                if "factor_scores" in risk_res:
+                    st.write("**Factor Breakdown:**")
+                    st.json(risk_res["factor_scores"])
+                else:
+                    st.json(risk_res)
                 st.divider()
+
+            # 2. Portfolio Tool Execution
+            port_res = result.get("portfolio_result")
+            if port_res:
+                st.markdown("#### 2️⃣ `portfolio_tool` Execution Output")
+                st.write(f"**Strategy:** `{port_res.get('portfolio_type', 'N/A')}` | **Expected Return:** `{port_res.get('expected_return', 'N/A')}` | **Horizon:** `{port_res.get('investment_horizon', 'N/A')}`")
+                st.write("**Asset Allocation Breakdown (%):**")
+                st.json(port_res.get("allocation", port_res))
+                st.divider()
+
+            # 3. LLM Message Sequence Trace
+            messages = result.get("messages", [])
+            if messages:
+                st.markdown("#### 3️⃣ LLM Message Exchange Trace")
+                for i, message in enumerate(messages):
+                    msg_type = getattr(message, "type", None)
+                    if not msg_type and isinstance(message, dict):
+                        msg_type = message.get("role", f"Step {i+1}")
+                    
+                    st.write(f"**Step {i+1} — {str(msg_type).upper()}:**")
+                    msg_content = getattr(message, "content", "") if hasattr(message, "content") else message.get("content", "")
+                    if msg_content:
+                        cleaned = extract_clean_text(msg_content)
+                        if cleaned.strip():
+                            st.code(cleaned, language="markdown")
+                        else:
+                            st.caption("(Tool call executed)")
+                    st.divider()
 
 
 if __name__ == "__main__":

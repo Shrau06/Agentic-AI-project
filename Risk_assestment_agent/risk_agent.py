@@ -153,10 +153,17 @@ Generate a comprehensive, structured WealthLens AI Risk & Allocation Diagnostic 
 *This automated risk evaluation is for educational and strategic planning purposes. Always consult a qualified SEBI-registered financial advisor before executing investment allocations.*
 """
 
+    messages_trace = [
+        {"role": "user", "content": f"Analyze risk for user: Age {user_data.get('age', 25)}, Category: {user_data.get('investment_category', 'Beginner')}, Goal: {user_data.get('goal', 'Retirement')}"},
+        {"role": "tool (risk_tool)", "content": json.dumps(r_res, indent=2)},
+        {"role": "tool (portfolio_tool)", "content": json.dumps(p_res, indent=2)},
+        {"role": "assistant (final_report)", "content": "Risk evaluation and asset allocation diagnostic report generated successfully."}
+    ]
+
     return {
         "user_profile": user_data,
         "agent_response": report,
-        "messages": [],
+        "messages": messages_trace,
         "risk_result": r_res,
         "portfolio_result": p_res
     }
