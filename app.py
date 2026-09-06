@@ -108,7 +108,11 @@ current_index = (
 col1, col2 = st.columns([1, 6])
 
 with col1:
-    st.image("assets/logo.png", width=75)
+    import os
+    if os.path.exists("assets/logo.png"):
+        st.image("assets/logo.png", width=75)
+    else:
+        st.markdown("### 💰")
 
 with col2:
     selected = option_menu(

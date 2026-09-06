@@ -2,6 +2,9 @@
 __pycache__/
 *.pyc
 venv/
-.streamlit/
+.streamlit/secrets.toml
 WealthLensAI_Report.pdf
 wealth.db
+users.db
+
+
