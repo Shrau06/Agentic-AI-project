@@ -30,6 +30,15 @@ def create_database():
     )
     """)
 
+    # Check and migrate existing tables missing user_id column
+    cursor.execute("PRAGMA table_info(wealth_data)")
+    columns = [row[1] for row in cursor.fetchall()]
+    if "user_id" not in columns:
+        try:
+            cursor.execute("ALTER TABLE wealth_data ADD COLUMN user_id INTEGER DEFAULT 0")
+        except Exception as e:
+            print(f"Migration notice: {e}")
+
     conn.commit()
     conn.close()
 
