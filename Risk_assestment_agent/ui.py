@@ -5,23 +5,25 @@ import streamlit as st
 
 def risk_assessment_ui():
     """
-    Displays the Risk Assessment UI and returns the user data
-    when the user clicks the Analyze button.
+    Displays the WealthLens AI Risk Assessment UI
+    and returns user data when the user clicks
+    'Analyze My Risk Profile'.
     """
 
-    # Force dark high-contrast dashboard styling globally
+    # ============================================================
+    # DARK THEME / UI STYLING
+    # ============================================================
+
     st.markdown(
         """
         <style>
-        /* Force App Background */
-        .stApp {
-            background-color: #0d1117 !important;
-            color: #f0f6fc !important;
-        }
-
-        /* Standout Header Banner */
+        /* Brand Header */
         .brand-header {
-            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            background: linear-gradient(
+                135deg,
+                #1f2937 0%,
+                #111827 100%
+            );
             border: 1px solid #374151;
             border-left: 6px solid #2563eb;
             padding: 24px;
@@ -31,7 +33,7 @@ def risk_assessment_ui():
 
         .brand-header h1 {
             color: #38bdf8 !important;
-            font-size: 32px !important;
+            font-size: 30px !important;
             font-weight: 700 !important;
             margin: 0 0 6px 0 !important;
             padding: 0 !important;
@@ -44,26 +46,20 @@ def risk_assessment_ui():
             margin: 0 !important;
         }
 
-        /* Section Title Banners */
+        /* Section Headers */
         .section-header {
-            color: #60a5fa !important;
+            color: #3b82f6 !important;
             font-size: 16px !important;
             font-weight: 600 !important;
             text-transform: uppercase !important;
             letter-spacing: 0.05em !important;
             padding-bottom: 8px !important;
-            border-bottom: 1px solid #1f2937 !important;
+            border-bottom: 2px solid #e2e8f0 !important;
             margin-top: 16px !important;
             margin-bottom: 20px !important;
         }
 
-        /* Fix Text Visibility across Streamlit widgets */
-        label, p, span, div[data-testid="stMarkdownContainer"] > p {
-            color: #e5e7eb !important;
-            font-size: 14px !important;
-        }
-
-        /* Custom Input Cards Styling */
+        /* Input fields */
         div[data-baseweb="input"],
         div[data-baseweb="select"] {
             background-color: #1f2937 !important;
@@ -71,7 +67,12 @@ def risk_assessment_ui():
             color: #ffffff !important;
         }
 
-        /* Radio Option Group Styling */
+        /* Input text */
+        input {
+            color: #ffffff !important;
+        }
+
+        /* Radio group */
         div[role="radiogroup"] {
             gap: 10px;
         }
@@ -79,9 +80,12 @@ def risk_assessment_ui():
         div[role="radiogroup"] label {
             background-color: #161b22;
             border: 1px solid #30363d;
+
             padding: 10px 14px;
             border-radius: 6px;
+
             width: 100%;
+
             transition: all 0.2s ease;
         }
 
@@ -90,16 +94,21 @@ def risk_assessment_ui():
             background-color: #1f2937;
         }
 
-        /* Submit Button */
+        /* Buttons */
         .stButton > button {
             width: 100% !important;
+
             background-color: #2563eb !important;
             color: #ffffff !important;
+
             font-weight: 600 !important;
             font-size: 16px !important;
+
             padding: 12px 20px !important;
+
             border-radius: 6px !important;
             border: none !important;
+
             margin-top: 10px !important;
         }
 
@@ -107,12 +116,36 @@ def risk_assessment_ui():
             background-color: #1d4ed8 !important;
             color: #ffffff !important;
         }
+
+        /* Form submit button */
+        button[kind="primaryFormSubmit"] {
+            width: 100% !important;
+
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+
+            font-weight: 600 !important;
+            font-size: 16px !important;
+
+            padding: 12px 20px !important;
+
+            border-radius: 6px !important;
+            border: none !important;
+        }
+
+        button[kind="primaryFormSubmit"]:hover {
+            background-color: #1d4ed8 !important;
+        }
+
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    # Prominent Brand Title Block
+    # ============================================================
+    # BRAND HEADER
+    # ============================================================
+
     st.markdown(
         """
         <div class="brand-header">
@@ -124,43 +157,54 @@ def risk_assessment_ui():
     )
 
     st.write(
-        "Answer a few questions so we can understand your investment behaviour "
-        "and suggest a suitable investment approach."
+        "Answer a few questions so we can understand your "
+        "investment behaviour and suggest a suitable "
+        "investment approach."
     )
+
+    # ============================================================
+    # FORM
+    # ============================================================
 
     with st.form("risk_assessment_form"):
 
-        # Basic Information Section
-        st.markdown(
-            '<div class="section-header">Basic Information</div>',
-            unsafe_allow_html=True,
-        )
+        # ========================================================
+        # BASIC INFORMATION (AUTO-SYNCED)
+        # ========================================================
 
-        col1, col2, col3 = st.columns(3)
+        profile = st.session_state.get("profile", {})
+        default_age = int(profile.get("age", 25)) if profile.get("age", 0) >= 18 else 25
+        default_income = int(profile.get("monthly_income", 30000) + profile.get("other_income", 0)) if profile.get("monthly_income", 0) > 0 else 30000
+        default_expense = int(profile.get("monthly_expenses", 15000)) if profile.get("monthly_expenses", 0) > 0 else 15000
 
-        with col1:
-            age = st.number_input(
-                "Your Age",
-                min_value=18,
-                max_value=100,
-                value=25,
-            )
+        st.info(f"🔗 **Synced with Profile:** Age: **{default_age}** | Monthly Income: **₹{default_income:,.0f}** | Expenses: **₹{default_expense:,.0f}** | Savings: **₹{default_income - default_expense:,.0f}**")
 
-        with col2:
-            income = st.number_input(
-                "Monthly Income (₹)",
-                min_value=0,
-                value=30000,
-            )
+        with st.expander("✏️ Adjust Personal Financial Numbers (Optional)", expanded=False):
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                age = st.number_input(
+                    "Your Age",
+                    min_value=18,
+                    max_value=100,
+                    value=default_age,
+                )
+            with col2:
+                income = st.number_input(
+                    "Monthly Income (₹)",
+                    min_value=0,
+                    value=default_income,
+                )
+            with col3:
+                monthly_expense = st.number_input(
+                    "Monthly Expenses (₹)",
+                    min_value=0,
+                    value=default_expense,
+                )
 
-        with col3:
-            monthly_expense = st.number_input(
-                "Monthly Expenses (₹)",
-                min_value=0,
-                value=15000,
-            )
+        # ========================================================
+        # INVESTMENT EXPERIENCE
+        # ========================================================
 
-        # Investment Experience Section
         st.markdown(
             '<div class="section-header">Investment Experience</div>',
             unsafe_allow_html=True,
@@ -174,6 +218,10 @@ def risk_assessment_ui():
 
         st.write("")
 
+        # ========================================================
+        # BEGINNER
+        # ========================================================
+
         if investment_category == "Beginner":
 
             col_a, col_b = st.columns(2)
@@ -181,7 +229,8 @@ def risk_assessment_ui():
             with col_a:
 
                 market_reaction = st.radio(
-                    "If ₹10,000 becomes ₹8,000 after one month, what will you do?",
+                    "If ₹10,000 becomes ₹8,000 after one month, "
+                    "what will you do?",
                     [
                         "Withdraw all my money",
                         "Withdraw some money",
@@ -232,6 +281,10 @@ def risk_assessment_ui():
                     ],
                 )
 
+        # ========================================================
+        # INTERMEDIATE
+        # ========================================================
+
         else:
 
             col_a, col_b = st.columns(2)
@@ -251,7 +304,8 @@ def risk_assessment_ui():
                 )
 
                 market_reaction = st.radio(
-                    "If your portfolio falls by 20%, what would you do?",
+                    "If your portfolio falls by 20%, "
+                    "what would you do?",
                     [
                         "Sell everything",
                         "Sell some investments",
@@ -293,9 +347,19 @@ def risk_assessment_ui():
 
                 goal = "Building long-term wealth"
 
+        # ========================================================
+        # SUBMIT
+        # ========================================================
+
         st.write("")
 
-        submitted = st.form_submit_button("Analyze My Risk Profile")
+        submitted = st.form_submit_button(
+            "Analyze My Risk Profile"
+        )
+
+        # ========================================================
+        # RETURN USER DATA
+        # ========================================================
 
         if submitted:
 

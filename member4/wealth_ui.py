@@ -17,24 +17,28 @@ from member4.sip_ui import sip_calculator_ui
 from member4.report_ui import report_ui
 
 def wealth_dashboard():
-
-    st.set_page_config(
-        page_title="WealthLensAI",
-        page_icon="💰",
-        layout="wide",
-    )
-
     st.title("💰 WealthLensAI")
     st.caption("AI Powered Wealth Planner")
 
     # ---------------- Sidebar ----------------
+
+    profile = st.session_state.get("profile", {})
+    saved_monthly = int(profile.get("monthly_savings", 5000)) if profile.get("monthly_savings", 0) > 0 else 5000
+    saved_current = int(profile.get("current_savings", 0)) if profile.get("current_savings", 0) > 0 else 0
+    
+    # Map risk level from Agent 2 if available
+    risk_level_stored = st.session_state.get("risk_level", "Moderate")
+    risk_map = {"Conservative": "Low", "Moderate": "Moderate", "Aggressive": "High"}
+    default_risk = risk_map.get(risk_level_stored, "Moderate")
+    risk_options = ["Low", "Moderate", "High"]
+    risk_idx = risk_options.index(default_risk) if default_risk in risk_options else 1
 
     st.sidebar.header("📥 Investment Details")
 
     investment = st.sidebar.number_input(
         "Monthly Investment (₹)",
         min_value=500,
-        value=5000,
+        value=saved_monthly,
         step=500,
     )
 
@@ -62,28 +66,25 @@ def wealth_dashboard():
     current_savings = st.sidebar.number_input(
         "Current Savings (₹)",
         min_value=0,
-        value=0,
+        value=saved_current,
         step=10000,
     )
 
     risk = st.sidebar.selectbox(
         "Risk Tolerance",
-        ["Low", "Moderate", "High"]
+        risk_options,
+        index=risk_idx
     )
 
     if "dashboard" not in st.session_state:
-        st.session_state.dashboard = False
-
-    if st.sidebar.button("🚀 Simulate Wealth"):
         st.session_state.dashboard = True
 
-    if st.sidebar.button("🔄 Reset"):
-        st.session_state.dashboard = False
+    if st.sidebar.button("🚀 Re-calculate Wealth", use_container_width=True):
+        st.session_state.dashboard = True
+        st.session_state.wealth_planning_advice = None
         st.rerun()
 
-    if not st.session_state.dashboard:
-        st.info("👈 Enter your details and click **🚀 Simulate Wealth**.")
-        return
+    st.info(f"🔗 **Synced Profile:** Monthly Investment: **₹{investment:,.0f}** | Risk Level: **{risk}** | Target Goal: **₹{goal:,.0f}**")
 
     # ---------------- Calculations ----------------
 
@@ -98,7 +99,8 @@ def wealth_dashboard():
         rate,
         years,
         goal,
-        future
+        future,
+        user_id=st.session_state.get("user_id", 0)
     )
 
     # ---------------- Dashboard ----------------
@@ -301,25 +303,32 @@ def wealth_dashboard():
     st.divider()
 
     # ---------------- AI Wealth Planning Agent ----------------
-
     st.header("🤖 AI Wealth Planning Agent")
 
-    with st.spinner("Analyzing your financial profile..."):
+    if "wealth_planning_advice" not in st.session_state:
+        st.session_state.wealth_planning_advice = None
 
-        advice = wealth_planning_agent(
-            investment,
-            rate,
-            years,
-            goal,
-            current_savings,
-            risk,
-            future,
-            profit,
-        )
-
-    st.success("Analysis Completed!")
-
-    st.markdown(advice)
+    if st.session_state.wealth_planning_advice is None:
+        if st.button("🚀 Generate AI Wealth Strategy Roadmap", use_container_width=True, key="generate_wealth_advice_btn"):
+            with st.spinner("Analyzing your profile & generating strategic wealth roadmap..."):
+                st.session_state.wealth_planning_advice = wealth_planning_agent(
+                    investment,
+                    rate,
+                    years,
+                    goal,
+                    current_savings,
+                    risk,
+                    future,
+                    profit,
+                )
+            st.success("Analysis Completed!")
+            st.rerun()
+    else:
+        with st.container(border=True):
+            st.markdown(st.session_state.wealth_planning_advice)
+        if st.button("🔄 Re-generate AI Wealth Strategy", key="regen_wealth_advice_btn"):
+            st.session_state.wealth_planning_advice = None
+            st.rerun()
 
     st.divider()
 

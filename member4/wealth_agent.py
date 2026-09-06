@@ -4,11 +4,27 @@ from langchain_groq import ChatGroq
 
 load_dotenv()
 
-llm = ChatGroq(
-    groq_api_key=os.getenv("GROQ_API_KEY"),
-    model_name="llama-3.3-70b-versatile",
-    temperature=0.3
-)
+def get_llm():
+    groq_key = os.getenv("GROQ_API_KEY") or os.getenv("Groq_API")
+    if groq_key:
+        try:
+            return ChatGroq(
+                groq_api_key=groq_key,
+                model_name="openai/gpt-oss-120b",
+                temperature=0.3
+            )
+        except Exception:
+            pass
+
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    from langchain_google_genai import ChatGoogleGenerativeAI
+    return ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        google_api_key=gemini_key,
+        temperature=0.3
+    )
+
+llm = get_llm()
 
 
 def wealth_planning_agent(
