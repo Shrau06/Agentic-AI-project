@@ -18,19 +18,6 @@ except ImportError:
 
 def get_risk_llm():
     """Retrieve candidate LLM for the risk assessment agent with provider fallbacks."""
-    groq_key = os.getenv("GROQ_API_KEY") or os.getenv("Groq_API")
-    if groq_key:
-        try:
-            from langchain_groq import ChatGroq
-            return ChatGroq(
-                model="llama-3.3-70b-versatile",
-                api_key=groq_key,
-                temperature=0.2,
-                timeout=15
-            )
-        except Exception:
-            pass
-
     gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if gemini_key:
         from langchain_google_genai import ChatGoogleGenerativeAI
@@ -40,7 +27,7 @@ def get_risk_llm():
                     model=model_name,
                     google_api_key=gemini_key,
                     temperature=0.2,
-                    timeout=15
+                    timeout=10
                 )
             except Exception:
                 continue
@@ -69,31 +56,45 @@ def run_risk_assessment(llm, user_data):
     if llm is None:
         llm = get_risk_llm()
 
-    # If LLM is available, invoke agent
+    # Pre-calculate deterministic mathematical risk & portfolio metrics
+    try:
+        r_res = risk_tool.invoke({"user_data": user_data})
+    except Exception as e:
+        print(f"Error calculating risk_tool: {e}")
+        r_res = {
+            "risk_score": 60,
+            "maximum_score": 115,
+            "risk_percentage": 52.0,
+            "risk_profile": "Moderate",
+            "risk_level": "Moderate",
+            "monthly_savings": max(0, user_data.get("income", 50000) - user_data.get("monthly_expense", 20000))
+        }
+
+    try:
+        p_res = portfolio_tool.invoke({"user_data": user_data, "risk_result": r_res})
+    except Exception as e:
+        print(f"Error calculating portfolio_tool: {e}")
+        p_res = {
+            "portfolio_type": r_res.get("risk_level", "Moderate"),
+            "allocation": {"Equity": 50, "Debt Funds": 25, "Gold": 10, "ETFs": 10, "Cash": 5},
+            "expected_return": "8% - 12% annually",
+            "investment_horizon": user_data.get("investment_period", "3-5 years")
+        }
+
+    # Attempt agent invocation
     if llm is not None:
         try:
             agent = create_risk_agent(llm)
             if agent is not None:
                 user_message = f"""
 Analyze this user's financial profile:
-
 {user_data}
 
-Perform a complete risk assessment.
+Pre-calculated Tool Outputs:
+- Risk Tool Assessment: {r_res}
+- Portfolio Allocation: {p_res}
 
-First use risk_tool to calculate:
-- risk score
-- risk percentage
-- risk profile
-- financial factors
-
-Then use portfolio_tool using the risk result to generate:
-- portfolio type
-- asset allocation
-- expected return
-- investment horizon
-
-Finally generate a complete WealthLens AI report.
+Generate a comprehensive, structured WealthLens AI Risk & Allocation Diagnostic report in markdown format.
 """
                 result = agent.invoke(
                     {
@@ -106,75 +107,56 @@ Finally generate a complete WealthLens AI report.
                     }
                 )
 
-                risk_result = None
-                portfolio_result = None
-                for msg in result.get("messages", []):
-                    msg_name = getattr(msg, "name", None)
-                    if not msg_name and isinstance(msg, dict):
-                        msg_name = msg.get("name")
-                    msg_content = getattr(msg, "content", "") if hasattr(msg, "content") else msg.get("content", "")
-
-                    if msg_name == "risk_tool":
-                        try:
-                            if isinstance(msg_content, dict):
-                                risk_result = msg_content
-                            elif isinstance(msg_content, str):
-                                risk_result = ast.literal_eval(msg_content)
-                        except Exception:
-                            pass
-                    elif msg_name == "portfolio_tool":
-                        try:
-                            if isinstance(msg_content, dict):
-                                portfolio_result = msg_content
-                            elif isinstance(msg_content, str):
-                                portfolio_result = ast.literal_eval(msg_content)
-                        except Exception:
-                            pass
-
-                return {
-                    "user_profile": user_data,
-                    "agent_response": result["messages"][-1].content,
-                    "messages": result["messages"],
-                    "risk_result": risk_result,
-                    "portfolio_result": portfolio_result,
-                }
+                agent_text = result["messages"][-1].content
+                if agent_text and len(str(agent_text).strip()) > 50:
+                    return {
+                        "user_profile": user_data,
+                        "agent_response": agent_text,
+                        "messages": result.get("messages", []),
+                        "risk_result": r_res,
+                        "portfolio_result": p_res,
+                    }
         except Exception as e:
-            print(f"Risk agent LLM invocation failed, falling back to direct tool calculations: {e}")
+            print(f"Risk agent LLM invocation failed, using direct diagnostic report: {e}")
 
-    # Deterministic fallback calculation via direct tools
-    try:
-        r_res = risk_tool.invoke(user_data)
-        p_res = portfolio_tool.invoke({
-            "risk_level": r_res.get("risk_level", "Moderate"),
-            "goal": user_data.get("goal", "Wealth Creation"),
-            "time_horizon": user_data.get("time_horizon", 5)
-        })
+    # Comprehensive fallback report
+    risk_lvl = r_res.get("risk_level", "Moderate")
+    score = r_res.get("risk_score", 60)
+    pct = r_res.get("risk_percentage", 50.0)
+    p_type = p_res.get("portfolio_type", risk_lvl)
+    alloc = p_res.get("allocation", {})
+    exp_ret = p_res.get("expected_return", "8% - 12% annually")
+    horizon = p_res.get("investment_horizon", user_data.get("investment_period", "3-5 years"))
 
-        fallback_report = f"""# ⚖️ WealthLens AI Risk & Allocation Diagnostic
+    alloc_md = "\n".join([f"- **{k}:** {v}%" for k, v in alloc.items()])
 
-## 1. Risk Profile Overview
-- **Calculated Risk Score:** {r_res.get('risk_score', 'N/A')}/100 ({r_res.get('risk_percentage', 0)}%)
-- **Assessed Risk Level:** **{r_res.get('risk_level', 'Moderate')}**
+    report = f"""# ⚖️ WealthLens AI Risk & Portfolio Diagnostic
 
-## 2. Recommended Portfolio Structure
-- **Portfolio Strategy:** {p_res.get('portfolio_type', 'Balanced Growth')}
-- **Target Asset Allocation:**
-{chr(10).join([f"  - **{k.title()}:** {v}%" for k, v in p_res.get('allocation', {}).items()])}
-- **Expected Return Range:** {p_res.get('expected_return', '10-12%')} per annum
-- **Recommended Investment Horizon:** {p_res.get('investment_horizon', '5+ Years')}
+## 1. Risk Profile Assessment
+- **Risk Score:** **{score}** / {r_res.get('maximum_score', 115)} ({pct:.1f}%)
+- **Assessed Risk Level:** **{risk_lvl}**
+- **Monthly Savings Capacity:** **₹{r_res.get('monthly_savings', 0):,.0f}**
+- **Investment Horizon:** **{horizon}**
 
-## 3. Advisory Guidance
-- Maintain disciplined asset rebalancing every 6 to 12 months.
-- Align high-equity exposure with long-term financial horizons to mitigate market volatility.
+## 2. Recommended Asset Allocation ({p_type})
+{alloc_md}
+
+- **Expected Annual Return:** **{exp_ret}**
+- **Strategic Horizon:** **{horizon}**
+
+## 3. Behavioral & Market Guidance
+- **Market Reaction Posture:** Your indicated response to volatility is aligned with a **{risk_lvl}** strategy.
+- **Rebalancing Plan:** Review allocation annually to lock in capital gains from outperforming asset classes.
+- **Emergency Protection:** Ensure at least 6 months of living expenses remain liquid before committing to higher-risk equity tranches.
+
+## 4. Professional Disclaimer
+*This automated risk evaluation is for educational and strategic planning purposes. Always consult a qualified SEBI-registered financial advisor before executing investment allocations.*
 """
 
-        return {
-            "user_profile": user_data,
-            "agent_response": fallback_report,
-            "messages": [],
-            "risk_result": r_res,
-            "portfolio_result": p_res
-        }
-    except Exception as err:
-        print(f"Direct fallback error: {err}")
-        return None
+    return {
+        "user_profile": user_data,
+        "agent_response": report,
+        "messages": [],
+        "risk_result": r_res,
+        "portfolio_result": p_res
+    }
